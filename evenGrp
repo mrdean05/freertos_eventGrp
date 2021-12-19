@@ -1,0 +1,40 @@
+#include <stdio.h>
+#include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
+#include "freertos/semphr.h"
+#include "freertos/event_groups.h"
+
+EventGroupHandle_t evtGrp;
+const int flag1= BIT0;
+const int flag2= BIT1;
+
+void listenHTTPS( void *params){
+   while (1){
+       xEventGroupSetBits(evtGrp, flag1);
+       printf("listening to HTTPS\n");
+       vTaskDelay(1000/ portTICK_PERIOD_MS);
+   }
+}
+
+void bluetooth(void * params){
+    while(1){
+        xEventGroupSetBits(evtGrp, flag2);
+        printf("listening to bluetooth\n");
+        vTaskDelay(1000/ portTICK_PERIOD_MS);
+    }
+}
+
+void success(void *params){
+   while(1){
+       xEventGroupWaitBits(evtGrp, flag1| flag2, true, true, portMAX_DELAY);
+       printf("HTTPS & bluetooth success");
+   }
+}
+
+void app_main(void)
+{
+evtGrp= xEventGroupCreate();
+xTaskCreate(&listenHTTPS, "listening to HTTPS", 2048, NULL, 1, NULL);
+xTaskCreate(&bluetooth, "listening to bluetooth", 2048, NULL, 1, NULL);
+xTaskCreate(&success, "successful reading", 2048, NULL, 1, NULL);
+}
